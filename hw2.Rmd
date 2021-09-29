@@ -115,7 +115,7 @@ set.seed(123)
 qbcomb_cv <- vfold_cv(qb_comb, v = 10)
 
 model_wf <- workflow() %>%
-  add_formula(Rating ~ College + Height + Age + Weight + hsloc) %>%
+  add_formula(PasserRating ~ College + Height + Age + Weight + hsloc) %>%
   add_model(lm_spec)
 
 mod1_cv <- fit_resamples(model_wf,
