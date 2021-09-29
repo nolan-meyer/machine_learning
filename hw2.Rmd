@@ -134,7 +134,8 @@ lm_lasso_spec <-
 # recipes & workflows
 
 #OLS recipe
-lm_rec <- recipe(PasserRating ~ College + Height + Age + Weight + hsloc, data = qb_comb) %>% 
+lm_rec <- recipe(Rating ~ Height + Age + Weight + Experience + College + hsloc, data = qb_comb) %>% 
+    step_filter(`Passes Attempted` >= 50, `Games Played` > 0) %>% #removes potential outliers with few passes
     step_lincomb(all_numeric_predictors()) %>% # removes predictors that are linear combos of others
     step_corr(all_predictors()) %>% #removes highly correlate variables
     step_novel(all_nominal_predictors()) %>% # important if you have rare categorical variables 
@@ -149,7 +150,8 @@ lm_wf <- workflow() %>%
 
 
 #LASSO recipe
-lasso_rec <- recipe( ~ , data = qb_comb) %>%
+lasso_rec <- recipe(Rating ~ Height + Age + Weight + Experience + College + hsloc, data = qb_comb) %>%
+    step_filter(`Passes Attempted` >= 50, `Games Played` > 0) %>% #removes potential outliers with few passes
     step_nzv(all_predictors()) %>% # removes variables with the same value
     step_novel(all_nominal_predictors()) %>% # important if you have rare categorical variables 
     step_normalize(all_numeric_predictors()) %>%  # important standardization step for LASSO
