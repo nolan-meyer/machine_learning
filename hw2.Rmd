@@ -69,15 +69,59 @@ set.seed(123)
 
 basic_stats <- read_csv("Basic_Stats.csv")
 qb_stats <- read_csv("Career_Stats_Passing.csv")
+punt_return <- read_csv("Career_Stats_Punt_Return.csv")
+punting <- read_csv("Career_Stats_Punting.csv")
+receiving <- read_csv("Career_Stats_Receiving.csv")
+kickers <- read_csv("Game_Logs_Kickers.csv")
+oline_logs <- read_csv("Game_Logs_Offensive_Line.csv")
+punters_logs <- read_csv("Game_Logs_Punters.csv")
+qb_logs <- read_csv("Game_Logs_Quarterback.csv")
+rb_logs <- read_csv("Game_Logs_Runningback.csv")
+wrandte_logs <- read_csv("Game_Logs_Wide_Receiver_and_Tight_End.csv")
+
 ```
 
 ```{r}
 # data cleaning
+qb_stats <- qb_stats %>%
+    select(-Position) %>%
+    
+qb_stats <- qb_stats %>%
+    rename("Rating" = "Passer Rating")
 
+basic_stats <- basic_stats %>%
+    rename("Team" = "Current Team")
+
+basic_stats <- basic_stats %>%
+    rename("hsloc" = "High School Location")
+
+basic_stats <- basic_stats %>%
+    rename("Weight" = "Weight (lbs)")
+
+basic_stats <- basic_stats %>%
+    rename("Height" = "Height (inches)")
+
+basic_stats <- basic_stats %>%
+    filter(Position == "QB")
+
+qb_comb <- merge(qb_stats, basic_stats,by="Name")
 ```
 
 ```{r}
 # creation of cv folds
+
+set.seed(123)
+
+qbcomb_cv <- vfold_cv(qb_comb, v = 10)
+
+model_wf <- workflow() %>%
+  add_formula(Rating ~ College + Height + Age + Weight + hsloc) %>%
+  add_model(lm_spec)
+
+mod1_cv <- fit_resamples(model_wf,
+  resamples = qbcomb_cv, 
+  metrics = metric_set(rmse, rsq, mae)
+)
 
 ```
 
