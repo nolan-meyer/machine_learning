@@ -132,9 +132,33 @@ lm_lasso_spec <-
 
 ```{r}
 # recipes & workflows
-model_wf <- workflow() %>%
-  add_formula(PasserRating ~ College + Height + Age + Weight + hsloc) %>%
+
+#OLS recipe
+lm_rec <- recipe(PasserRating ~ College + Height + Age + Weight + hsloc, data = qb_comb) %>% 
+    step_lincomb(all_numeric_predictors()) %>% # removes predictors that are linear combos of others
+    step_corr(all_predictors()) %>% #removes highly correlate variables
+    step_novel(all_nominal_predictors()) %>% # important if you have rare categorical variables 
+    step_nzv(all_numeric_predictors()) %>% # removes predictors with near zero variability
+    step_dummy(all_nominal_predictors()) # creates indicator variables for categorical variables
+
+#OLS workflow
+lm_wf <- workflow() %>%
+  add_recipe(lm_rec) %>%
   add_model(lm_spec)
+
+
+
+#LASSO recipe
+lasso_rec <- recipe( ~ , data = qb_comb) %>%
+    step_nzv(all_predictors()) %>% # removes variables with the same value
+    step_novel(all_nominal_predictors()) %>% # important if you have rare categorical variables 
+    step_normalize(all_numeric_predictors()) %>%  # important standardization step for LASSO
+    step_dummy(all_nominal_predictors())  # creates indicator variables for categorical variables
+
+#LASSO workflow
+lasso_wf <- workflow() %>% 
+  add_recipe(lasso_rec) %>%
+  add_model(lm_lasso_spec)
 ```
 
 ```{r}
