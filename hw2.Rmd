@@ -63,6 +63,7 @@ library(readr)
 library(broom)
 library(ggplot2)
 library(tidymodels) 
+library(tidyverse)
 tidymodels_prefer() # Resolves conflicts, prefers tidymodel functions
 
 set.seed(123)
@@ -84,7 +85,7 @@ wrandte_logs <- read_csv("Game_Logs_Wide_Receiver_and_Tight_End.csv")
 ```{r}
 # data cleaning
 qb_stats <- qb_stats %>%
-    select(-Position) %>%
+    select(-Position)
     
 qb_stats <- qb_stats %>%
     rename("Rating" = "Passer Rating")
@@ -104,35 +105,36 @@ basic_stats <- basic_stats %>%
 basic_stats <- basic_stats %>%
     filter(Position == "QB")
 
-qb_comb <- merge(qb_stats, basic_stats,by="Name")
+qb_comb <- merge(qb_stats, basic_stats, by="Name")
 ```
 
 ```{r}
 # creation of cv folds
-
-set.seed(123)
-
 qbcomb_cv <- vfold_cv(qb_comb, v = 10)
-
-model_wf <- workflow() %>%
-  add_formula(PasserRating ~ College + Height + Age + Weight + hsloc) %>%
-  add_model(lm_spec)
-
-mod1_cv <- fit_resamples(model_wf,
-  resamples = qbcomb_cv, 
-  metrics = metric_set(rmse, rsq, mae)
-)
-
 ```
 
 ```{r}
 # model spec
 
+#OLS spec
+lm_spec <- 
+    linear_reg() %>% 
+    set_engine(engine = 'lm') %>% 
+    set_mode('regression') 
+
+#LASSO spec
+lm_lasso_spec <- 
+  linear_reg() %>%
+  set_args(mixture = 1, penalty = 0) %>% ## mixture = 1 indicates Lasso, we'll choose penalty later
+  set_engine(engine = 'glmnet') %>% 
+  set_mode('regression') 
 ```
 
 ```{r}
 # recipes & workflows
-
+model_wf <- workflow() %>%
+  add_formula(PasserRating ~ College + Height + Age + Weight + hsloc) %>%
+  add_model(lm_spec)
 ```
 
 ```{r}
@@ -144,7 +146,10 @@ c.
 
 ```{r}
 #  calculate/collect CV metrics
-
+mod1_cv <- fit_resamples(model_wf,
+  resamples = qbcomb_cv, 
+  metrics = metric_set(rmse, rsq, mae)
+)
 ```
 
  
