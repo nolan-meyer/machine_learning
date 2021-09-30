@@ -286,8 +286,18 @@ e.
 2. **Summarize investigations**
     - Decide on an overall best model based on your investigations so far. To do this, make clear your analysis goals. Predictive accuracy? Interpretability? A combination of both?
 
+The overall best model based on our investigations so far is our model titled
+"final fit." This model has age, weight, height, college, high school location,
+and experience. The penalty for this model is 1 x 10^-5. Some of the key
+predictors we started with became 0 for this model, more specifically age and 
+weight. Certain levels of the categorical variables got close to 0, namely in
+experience, high school location, and college. 
 
-The overall best model based on our investigations so far is 
+We want a combination of predictive accuracy and interpretability. 
+Our main goal is predictive accuracy, as we want to find what predictors best 
+predict quarterback performance/rating. However, we still want the the 
+coefficients to be meaningful and interpretable, so we decided on a LASSO 
+algorithm. 
 
 <br>
 
