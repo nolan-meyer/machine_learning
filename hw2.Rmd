@@ -55,7 +55,7 @@ Alternatively, you may knit your Rmd directly to PDF if you have LaTeX installed
 
 a & b.
 
-```{r}
+```{r, eval = TRUE}
 # library statements 
 # read in data
 library(dplyr)
