@@ -131,7 +131,7 @@ lm_spec <-
 #LASSO spec
 lm_lasso_spec <- 
   linear_reg() %>%
-  set_args(mixture = 1, penalty = 0) %>% ## mixture = 1 indicates Lasso, we'll choose penalty later
+  set_args(mixture = 1, penalty = tune()) %>% ## mixture = 1 indicates Lasso, we'll choose penalty later
   set_engine(engine = 'glmnet') %>% 
   set_mode('regression') 
 ```
@@ -145,9 +145,7 @@ lm_rec <- recipe(Rating ~ Height + Age + Weight + Experience + College + hsloc +
     update_role(`Games Played`, new_role = 'Info') %>%
     step_filter(`Passes Attempted` >= 50, `Games Played` > 0) %>% #removes potential outliers with few passes
     step_lincomb(all_numeric_predictors()) %>% # removes predictors that are linear combos of others
-    step_corr(all_predictors()) %>% #removes highly correlate variables
-    step_novel(all_nominal_predictors()) %>% # important if you have rare categorical variables 
-    step_nzv(all_numeric_predictors()) %>% # removes predictors with near zero variability
+    step_corr(all_predictors()) %>% #removes highly correlated variables
     step_dummy(all_nominal_predictors()) # creates indicator variables for categorical variables
 
 #OLS workflow
