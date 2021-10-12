@@ -1,8 +1,19 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
 ```{r hw2_setup, include=FALSE}
 knitr::opts_chunk$set(echo=TRUE, eval=FALSE)
+
+
 ```
 
 # Homework 2 {-}
+
+Will Orser
+Nolan Meyer
+Rohit Shah
 
 <center>
 **Due Thursday, September 30 at 11:59pm CST on [Moodle](https://moodle.macalester.edu/mod/assign/view.php?id=27980)**
@@ -148,7 +159,9 @@ lm_rec <- recipe(Rating ~ Height + Age + Weight + Experience + College + hsloc +
     step_corr(all_predictors()) %>% #removes highly correlate variables
     step_novel(all_nominal_predictors()) %>% # important if you have rare categorical variables 
     step_nzv(all_numeric_predictors()) %>% # removes predictors with near zero variability
-    step_dummy(all_nominal_predictors()) # creates indicator variables for categorical variables
+    step_dummy(all_nominal_predictors()) %>% # creates indicator variables for categorical variables
+    step_ns(x, deg_free = 2) # natural cubic spline (higher deg_free means more knots)
+
 
 #OLS workflow
 lm_wf <- workflow() %>%
