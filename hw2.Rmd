@@ -160,7 +160,8 @@ lm_rec <- recipe(Rating ~ Height + Age + Weight + Experience + College + hsloc +
     step_novel(all_nominal_predictors()) %>% # important if you have rare categorical variables 
     step_nzv(all_numeric_predictors()) %>% # removes predictors with near zero variability
     step_dummy(all_nominal_predictors()) %>% # creates indicator variables for categorical variables
-    step_ns(x, deg_free = 2) # natural cubic spline (higher deg_free means more knots)
+    step_ns(Weight, deg_free = 4) %>% # natural cubic spline (higher deg_free means more knots)
+    step_ns(Height, deg_free = 4)
 
 
 #OLS workflow
@@ -178,7 +179,9 @@ lasso_rec <- recipe(Rating ~ Height + Age + Weight + Experience + College + hslo
     step_nzv(all_predictors()) %>% # removes variables with the same value
     step_novel(all_nominal_predictors()) %>% # important if you have rare categorical variables 
     step_normalize(all_numeric_predictors()) %>%  # important standardization step for LASSO
-    step_dummy(all_nominal_predictors())  # creates indicator variables for categorical variables
+    step_dummy(all_nominal_predictors()) %>%  # creates indicator variables for categorical variables
+    step_ns(Weight, deg_free = 4) %>%
+    step_ns(Height, deg_free = 4)
 
 #lasso_rec %>% prep(qb_comb) %>% juice()
 
