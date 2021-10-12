@@ -223,6 +223,10 @@ mod1_cv <- fit_resamples(final_fit,
 )
 
 mod1_cv %>% collect_metrics()
+
+collect_metrics(tune_res) %>% 
+  filter(.metric == "rmse") %>% 
+  select(penalty, rmse = mean)
 ```
 
  
@@ -234,7 +238,7 @@ mod1_output <- qb_comb %>%
   bind_cols(predict(final_fit, new_data = qb_comb)) %>%
     mutate(resid = Rating - .pred)
 
-#Height
+#Height (some non-linearity)
 ggplot(mod1_output, aes(x = Height, y = resid)) +
     geom_point() +
     geom_smooth() +
@@ -248,7 +252,7 @@ ggplot(mod1_output, aes(x = Age, y = resid)) +
     geom_hline(yintercept = 0, color = "red") + 
     theme_classic() 
 
-#Weight
+#Weight (some non-linearity)
 ggplot(mod1_output, aes(x = Weight, y = resid)) +
     geom_point() +
     geom_smooth() +
