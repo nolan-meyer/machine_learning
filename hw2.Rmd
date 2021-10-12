@@ -159,9 +159,11 @@ lm_rec <- recipe(Rating ~ Height + Age + Weight + Experience + College + hsloc +
     step_corr(all_predictors()) %>% #removes highly correlate variables
     step_novel(all_nominal_predictors()) %>% # important if you have rare categorical variables 
     step_nzv(all_numeric_predictors()) %>% # removes predictors with near zero variability
-    step_dummy(all_nominal_predictors()) %>% # creates indicator variables for categorical variables
-    step_ns(Weight, deg_free = 4) %>% # natural cubic spline (higher deg_free means more knots)
-    step_ns(Height, deg_free = 4)
+    step_dummy(all_nominal_predictors())  # creates indicator variables for categorical variables
+    
+ns3_OLS <- lm_rec %>%
+  step_ns(Weight, deg_free = 3) %>% # natural cubic spline (higher deg_free means more knots)
+  step_ns(Height, deg_free = 3)
 
 
 #OLS workflow
@@ -179,15 +181,17 @@ lasso_rec <- recipe(Rating ~ Height + Age + Weight + Experience + College + hslo
     step_nzv(all_predictors()) %>% # removes variables with the same value
     step_novel(all_nominal_predictors()) %>% # important if you have rare categorical variables 
     step_normalize(all_numeric_predictors()) %>%  # important standardization step for LASSO
-    step_dummy(all_nominal_predictors()) %>%  # creates indicator variables for categorical variables
-    step_ns(Weight, deg_free = 4) %>%
-    step_ns(Height, deg_free = 4)
+    step_dummy(all_nominal_predictors())  # creates indicator variables for categorical variables
+    
+ns3_lasso <- lasso_rec %>%
+  step_ns(Weight, deg_free = 3) %>% # natural cubic spline (higher deg_free means more knots)
+  step_ns(Height, deg_free = 3)
 
 #lasso_rec %>% prep(qb_comb) %>% juice()
 
 #LASSO workflow
 lasso_wf <- workflow() %>% 
-  add_recipe(lasso_rec) %>%
+  add_recipe(ns3_lasso) %>%
   add_model(lm_lasso_spec)
 ```
 
@@ -201,7 +205,7 @@ lm_lasso_spec_tune <-
   set_mode('regression') 
 
 lasso_wf <- workflow() %>% 
-  add_recipe(lasso_rec) %>%
+  add_recipe(ns3_lasso) %>%
   add_model(lm_lasso_spec_tune) 
 
 penalty_grid <- grid_regular(
