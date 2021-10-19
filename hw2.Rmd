@@ -66,7 +66,7 @@ Alternatively, you may knit your Rmd directly to PDF if you have LaTeX installed
 
 a & b.
 
-```{r}
+```{r, eval = TRUE}
 # library statements 
 # read in data
 library(dplyr)
@@ -142,7 +142,7 @@ lm_spec <-
 #LASSO spec
 lm_lasso_spec <- 
   linear_reg() %>%
-  set_args(mixture = 1, penalty = 0) %>% ## mixture = 1 indicates Lasso, we'll choose penalty later
+  set_args(mixture = 1, penalty = tune()) %>% ## mixture = 1 indicates Lasso, we'll choose penalty later
   set_engine(engine = 'glmnet') %>% 
   set_mode('regression') 
 ```
@@ -156,6 +156,7 @@ lm_rec <- recipe(Rating ~ Height + Age + Weight + Experience + College + hsloc +
     update_role(`Games Played`, new_role = 'Info') %>%
     step_filter(`Passes Attempted` >= 50, `Games Played` > 0) %>% #removes potential outliers with few passes
     step_lincomb(all_numeric_predictors()) %>% # removes predictors that are linear combos of others
+<<<<<<< HEAD
     step_corr(all_predictors()) %>% #removes highly correlate variables
     step_novel(all_nominal_predictors()) %>% # important if you have rare categorical variables 
     step_nzv(all_numeric_predictors()) %>% # removes predictors with near zero variability
@@ -165,6 +166,10 @@ ns3_OLS <- lm_rec %>%
   step_ns(Weight, deg_free = 3) %>% # natural cubic spline (higher deg_free means more knots)
   step_ns(Height, deg_free = 3)
 
+=======
+    step_corr(all_predictors()) %>% #removes highly correlated variables
+    step_dummy(all_nominal_predictors()) # creates indicator variables for categorical variables
+>>>>>>> c3ce13654f0c743613308a5301ab3b9bbbf2c5cb
 
 #OLS workflow
 lm_wf <- workflow() %>%
@@ -245,6 +250,10 @@ mod1_cv <- fit_resamples(final_fit,
 )
 
 mod1_cv %>% collect_metrics()
+
+collect_metrics(tune_res) %>% 
+  filter(.metric == "rmse") %>% 
+  select(penalty, rmse = mean)
 ```
 
  
@@ -256,7 +265,7 @@ mod1_output <- qb_comb %>%
   bind_cols(predict(final_fit, new_data = qb_comb)) %>%
     mutate(resid = Rating - .pred)
 
-#Height
+#Height (some non-linearity)
 ggplot(mod1_output, aes(x = Height, y = resid)) +
     geom_point() +
     geom_smooth() +
@@ -270,7 +279,7 @@ ggplot(mod1_output, aes(x = Age, y = resid)) +
     geom_hline(yintercept = 0, color = "red") + 
     theme_classic() 
 
-#Weight
+#Weight (some non-linearity)
 ggplot(mod1_output, aes(x = Weight, y = resid)) +
     geom_point() +
     geom_smooth() +
