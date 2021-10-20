@@ -90,7 +90,6 @@ punters_logs <- read_csv("Game_Logs_Punters.csv")
 qb_logs <- read_csv("Game_Logs_Quarterback.csv")
 rb_logs <- read_csv("Game_Logs_Runningback.csv")
 wrandte_logs <- read_csv("Game_Logs_Wide_Receiver_and_Tight_End.csv")
-
 ```
 
 ```{r}

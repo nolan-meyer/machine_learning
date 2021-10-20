@@ -50,6 +50,243 @@ Alternatively, you may knit your Rmd directly to PDF if you have LaTeX installed
         - Note that if some (but not all) of the indicator terms for a categorical predictor are selected in the final models, the whole predictor should be treated as selected.
 <br>
 
+a & b.
+
+```{r, eval = TRUE}
+# library statements 
+# read in data
+library(dplyr)
+library(readr)
+library(broom)
+library(ggplot2)
+library(tidymodels) 
+library(tidyverse)
+tidymodels_prefer() # Resolves conflicts, prefers tidymodel functions
+
+set.seed(123)
+
+basic_stats <- read_csv("Basic_Stats.csv")
+qb_stats <- read_csv("Career_Stats_Passing.csv")
+punt_return <- read_csv("Career_Stats_Punt_Return.csv")
+punting <- read_csv("Career_Stats_Punting.csv")
+receiving <- read_csv("Career_Stats_Receiving.csv")
+kickers <- read_csv("Game_Logs_Kickers.csv")
+oline_logs <- read_csv("Game_Logs_Offensive_Line.csv")
+punters_logs <- read_csv("Game_Logs_Punters.csv")
+qb_logs <- read_csv("Game_Logs_Quarterback.csv")
+rb_logs <- read_csv("Game_Logs_Runningback.csv")
+wrandte_logs <- read_csv("Game_Logs_Wide_Receiver_and_Tight_End.csv")
+```
+
+```{r}
+# data cleaning
+qb_stats <- qb_stats %>%
+    select(-Position)
+    
+qb_stats <- qb_stats %>%
+    rename("Rating" = "Passer Rating")
+
+basic_stats <- basic_stats %>%
+    rename("Team" = "Current Team")
+
+basic_stats <- basic_stats %>%
+    rename("hsloc" = "High School Location")
+
+basic_stats <- basic_stats %>%
+    rename("Weight" = "Weight (lbs)")
+
+basic_stats <- basic_stats %>%
+    rename("Height" = "Height (inches)")
+
+basic_stats <- basic_stats %>%
+    filter(Position == "QB")
+
+qb_comb <- merge(qb_stats, basic_stats, by="Name")
+
+
+qb_comb$`Passes Attempted`[which(qb_comb$`Passes Attempted` == '--')] = NA
+qb_comb <- qb_comb %>%
+  mutate(`Passes Attempted` = as.numeric(`Passes Attempted`))
+
+```
+
+```{r}
+# creation of cv folds
+qbcomb_cv <- vfold_cv(qb_comb, v = 10)
+```
+
+```{r}
+# model spec
+
+#OLS spec
+lm_spec <- 
+    linear_reg() %>% 
+    set_engine(engine = 'lm') %>% 
+    set_mode('regression') 
+
+#LASSO spec
+lm_lasso_spec <- 
+  linear_reg() %>%
+  set_args(mixture = 1, penalty = tune()) %>% ## mixture = 1 indicates Lasso, we'll choose penalty later
+  set_engine(engine = 'glmnet') %>% 
+  set_mode('regression') 
+```
+
+```{r}
+# recipes & workflows
+
+#OLS recipe
+lm_rec <- recipe(Rating ~ Height + Age + Weight + Experience + College + hsloc + `Passes Attempted` + `Games Played`, data = qb_comb) %>% 
+    update_role(`Passes Attempted`, new_role = 'Info') %>%
+    update_role(`Games Played`, new_role = 'Info') %>%
+    step_filter(`Passes Attempted` >= 50, `Games Played` > 0) %>% #removes potential outliers with few passes
+    step_lincomb(all_numeric_predictors()) %>% # removes predictors that are linear combos of others
+    step_corr(all_predictors()) %>% #removes highly correlated variables
+    step_dummy(all_nominal_predictors()) # creates indicator variables for categorical variables
+    
+ns3_OLS <- lm_rec %>%
+  step_ns(Weight, deg_free = 3) %>% # natural cubic spline (higher deg_free means more knots)
+  step_ns(Height, deg_free = 3)
+    
+
+#OLS workflow
+lm_wf <- workflow() %>%
+  add_recipe(lm_rec) %>%
+  add_model(lm_spec)
+
+
+#LASSO recipe
+lasso_rec <- recipe(Rating ~ Height + Age + Weight + Experience + College + hsloc + `Passes Attempted` + `Games Played`, data = qb_comb) %>%
+    update_role(`Passes Attempted` , new_role = 'Info') %>%
+    update_role(`Games Played` , new_role = 'Info') %>%
+    step_filter(`Passes Attempted` >= 50, `Games Played` > 0) %>% #removes potential outliers with few passes
+    step_nzv(all_predictors()) %>% # removes variables with the same value
+    step_novel(all_nominal_predictors()) %>% # important if you have rare categorical variables 
+    step_normalize(all_numeric_predictors()) %>%  # important standardization step for LASSO
+    step_dummy(all_nominal_predictors())  # creates indicator variables for categorical variables
+    
+ns3_lasso <- lasso_rec %>%
+  step_ns(Weight, deg_free = 3) %>% # natural cubic spline (higher deg_free means more knots)
+  step_ns(Height, deg_free = 3)
+
+#lasso_rec %>% prep(qb_comb) %>% juice()
+
+#LASSO workflow
+lasso_wf <- workflow() %>% 
+  add_recipe(ns3_lasso) %>%
+  add_model(lm_lasso_spec)
+```
+
+
+```{r}
+# fit & tune models
+lm_lasso_spec_tune <- 
+  linear_reg() %>%
+  set_args(mixture = 1, penalty = tune()) %>% ## tune() indicates that we will try a variety of values
+  set_engine(engine = 'glmnet') %>%
+  set_mode('regression') 
+
+lasso_wf <- workflow() %>% 
+  add_recipe(ns3_lasso) %>%
+  add_model(lm_lasso_spec_tune) 
+
+penalty_grid <- grid_regular(
+  penalty(range = c(-5, 3)), #log10 transformed 10^-5 to 10^3
+  levels = 50)
+
+tune_res <- tune_grid( # new function for tuning hyperparameters
+  lasso_wf, # workflow
+  resamples = qbcomb_cv, # folds
+  metrics = metric_set(rmse),
+  grid = penalty_grid # penalty grid
+)
+
+autoplot(tune_res)
+
+collect_metrics(tune_res) %>%
+  filter(.metric == 'rmse') %>%
+  select(penalty, rmse = mean) 
+
+
+best_penalty <- select_best(tune_res, metric = 'rmse') # choose best penalty value
+
+final_wf <- finalize_workflow(lasso_wf, best_penalty) # incorporates penalty value to workflow
+
+final_fit <- fit(final_wf, data = qb_comb)
+
+tidy(final_fit)
+```
+
+c.
+
+```{r}
+#  calculate/collect CV metrics
+mod1_cv <- fit_resamples(final_fit,
+  resamples = qbcomb_cv, 
+  metrics = metric_set(rmse, rsq, mae)
+)
+
+mod1_cv %>% collect_metrics()
+
+collect_metrics(tune_res) %>% 
+  filter(.metric == "rmse") %>% 
+  select(penalty, rmse = mean)
+```
+
+ 
+d.
+
+```{r}
+# visual residuals
+mod1_output <- qb_comb %>%
+  bind_cols(predict(final_fit, new_data = qb_comb)) %>%
+    mutate(resid = Rating - .pred)
+
+#Height (some non-linearity)
+ggplot(mod1_output, aes(x = Height, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") + 
+    theme_classic() 
+
+#Age
+ggplot(mod1_output, aes(x = Age, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") + 
+    theme_classic() 
+
+#Weight (some non-linearity)
+ggplot(mod1_output, aes(x = Weight, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") + 
+    theme_classic() 
+
+#Experience
+ggplot(mod1_output, aes(x = Experience, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") + 
+    theme_classic() 
+
+#College
+ggplot(mod1_output, aes(x = College, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") + 
+    theme_classic() 
+
+#High School Location
+ggplot(mod1_output, aes(x = hsloc, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") + 
+    theme_classic() 
+```
+
+
+
 2. **Accounting for nonlinearity**
     - Update your OLS model(s) and LASSO model to use natural splines for the quantitative predictors.
         - You'll need to update the recipe to include `step_ns()` for each quantitative predictor.
