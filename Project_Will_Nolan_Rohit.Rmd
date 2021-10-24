@@ -119,8 +119,7 @@ qb_comb <- qb_comb %>% select(-c(Number, `Years Played`))
 
 qb_comb <- qb_comb %>% mutate(Experience = as.numeric(stringr::str_extract(Experience,'[0-9]+')))
 
-qb_comb$hsloc
-
+qb_comb <- qb_comb %>% mutate(hsState = stringr::str_sub(hsloc,-2,-1))
 ```
 
 ```{r}
