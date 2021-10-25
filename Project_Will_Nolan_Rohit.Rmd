@@ -308,60 +308,12 @@ ggplot(mod1_output, aes(x = hsloc, y = resid)) +
         - Do you gain any insights from the GAM output plots for each predictor?
 
     - Don't worry about KNN for now.
-
-
-```{r}
-# fit & tune models
-lm_lasso_spec_tune <- 
-  linear_reg() %>%
-  set_args(mixture = 1, penalty = tune()) %>% ## tune() indicates that we will try a variety of values
-  set_engine(engine = 'glmnet') %>%
-  set_mode('regression') 
-
-ns3_lasso <- lm_rec %>%
-  step_ns(Weight, deg_free = 3) %>% # natural cubic spline (higher deg_free means more knots)
-  step_ns(Height, deg_free = 3) %>% 
-    step_ns(Age, deg_free = 3) %>% 
-    step_ns(`Passes Attempted`, deg_free = 3) %>% 
-    step_ns(`Games Played`, deg_free = 3)  
-
-lasso_wf <- workflow() %>% 
-  add_recipe(ns3_lasso) %>%
-  add_model(lm_lasso_spec_tune) 
-
-penalty_grid <- grid_regular(
-  penalty(range = c(-5, 3)), #log10 transformed 10^-5 to 10^3
-  levels = 50)
-
-splines_tune_res <- tune_grid( # new function for tuning hyperparameters
-  lasso_wf, # workflow
-  resamples = qbcomb_cv, # folds
-  metrics = metric_set(rmse),
-  grid = penalty_grid # penalty grid
-)
-
-autoplot(splines_tune_res)
-
-collect_metrics(splines_tune_res) %>%
-  filter(.metric == 'rmse') %>%
-  select(penalty, rmse = mean) 
-
-
-splines_lasso_best_penalty <- select_best(splines_tune_res, metric = 'rmse') # choose best penalty value
-
-final_wf <- finalize_workflow(lasso_wf, splines_lasso_best_penalty) # incorporates penalty value to workflow
-
-splines_fit <- fit(final_wf, data = qb_comb)
-
-tidy(splines_fit)
-```
-
-
-
-
+    
     
 ```{r}
-qb_comb %>% purrr::map(~sum(is.na(.)))
+#OLS model with splines
+
+#qb_comb %>% purrr::map(~sum(is.na(.)))
 
 lm_spec <- 
   linear_reg() %>%
@@ -373,9 +325,9 @@ lm_rec <- recipe(Rating ~ Height + Age + Weight + Experience + College + hsloc +
     update_role(`Passes Attempted`, new_role = 'Info') %>%
     update_role(`Games Played`, new_role = 'Info') %>%
     step_filter(`Passes Attempted` >= 50, `Games Played` > 0) %>% #removes potential outliers with few passes
-    step_lincomb(all_numeric_predictors()) %>% # removes predictors that are linear combos of others
-    step_corr(all_numeric_predictors()) %>% #removes highly correlated variables
-    step_other(all_nominal_predictors(),theshold = .03)  %>%
+    #step_lincomb(all_numeric_predictors()) %>% # removes predictors that are linear combos of others
+    #step_corr(all_numeric_predictors()) %>% #removes highly correlated variables
+    step_other(all_nominal_predictors(),threshold = .05)  %>%
     step_dummy(all_nominal_predictors())  # creates indicator variables for categorical variables
    
  
@@ -391,15 +343,15 @@ splines_wf <- workflow() %>%
   add_recipe(ns3_OLS) %>%
   add_model(lm_spec)
 
+fit(splines_wf, data = qb_comb) %>% tidy()
+
 #  calculate/collect CV metrics
 splines_cv <- fit_resamples(splines_wf,
   resamples = qbcomb_cv, 
   metrics = metric_set(rmse, rsq, mae))
 
 splines_cv %>% collect_metrics()
-```
-    
-    
+```    
 
 <br>
 
