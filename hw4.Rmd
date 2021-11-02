@@ -28,7 +28,7 @@ receiving <- read_csv("Career_Stats_Receiving.csv")
 kickers <- read_csv("Game_Logs_Kickers.csv")
 oline_logs <- read_csv("Game_Logs_Offensive_Line.csv")
 punters_logs <- read_csv("Game_Logs_Punters.csv")
-qb_logs <- read_csv("Game_Logs_Quarterback.csv")
+qb_logs <- read_csv("Game_Logs_Quarterback.csv",na=c("","--","NA"))
 rb_logs <- read_csv("Game_Logs_Runningback.csv")
 wrandte_logs <- read_csv("Game_Logs_Wide_Receiver_and_Tight_End.csv")
 ```
@@ -68,6 +68,8 @@ qb_comb <- qb_comb %>% select(-c(Number, `Years Played`))
 
 
 qb_comb <- qb_comb %>% mutate(Experience = as.numeric(stringr::str_extract(Experience,'[0-9]+')))
+
+
 
 #qb_comb$hsloc
 #####################
