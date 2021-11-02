@@ -70,4 +70,10 @@ qb_comb <- qb_comb %>% select(-c(Number, `Years Played`))
 qb_comb <- qb_comb %>% mutate(Experience = as.numeric(stringr::str_extract(Experience,'[0-9]+')))
 
 #qb_comb$hsloc
+#####################
+
+qb_logs <- qb_logs %>% 
+  filter(Season != "Preseason", Outcome != "T", `Games Started` == 1) %>% 
+  select(-c(Position, Week, `Game Date`, Score, `Games Played`, `Games Started`, Name, `Player Id`, Year, Season, Opponent, `Home or Away`))
 ```
+
