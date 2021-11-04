@@ -265,10 +265,19 @@ there is no substantial difference in performance. Our logistic regression model
 returns similar rates for sensitivity of 78.05% and specificity of 76.18%.
 Its accuracy rate of 77.14% is also similar to that of our random forest model.
 
-There is no metric that really distinguishes the performance of either
-model.
+Both models perform similarly. While there are marginal differences in terms
+of sensitivity, specificity, and accuracy, they aren't enough to really
 
 ### Classification - Conclusions
 
 As previously mentioned, both random forest and logistic regression models 
 perform relatively well on the data. 
+
+```{r}
+logistic_output %>%
+  conf_mat(truth = Outcome, estimate = .pred_class)
+
+outcome_rf_OOB_output %>%
+  conf_mat(truth = Outcome, estimate = .pred_class)
+
+```
