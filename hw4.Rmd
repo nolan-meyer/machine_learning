@@ -1,3 +1,8 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -171,6 +176,8 @@ logistic_output %>%
 
 ## Random Forest Model
 
+The second method we explore to answer our classification question is a random forest model.
+
 ```{r}
 outcome_rf_rec <- recipe(Outcome ~ ., data = qb_logs) %>%
   step_normalize(all_numeric_predictors())
@@ -258,7 +265,7 @@ Without bootstrapping, it generates a sensitivity of 77.89% and specificity of
 76.65%, showing a relatively strong performance in terms of true positive and
 true negative rates. It returns an accuracy rate of 77.25%.
 Bootstrapping the data also results in a strong performance, as illustrated by 
-the ROC's area of 0.85. 
+the area under the ROC, 0.85. 
 
 Comparing our random forest model to the logistic regression model, we see that
 there is no substantial difference in performance. Our logistic regression model
@@ -266,13 +273,13 @@ returns similar rates for sensitivity of 78.05% and specificity of 76.18%.
 Its accuracy rate of 77.14% is also similar to that of our random forest model.
 
 Both models perform similarly. While there are marginal differences in terms
-of sensitivity, specificity, and accuracy, they aren't enough to really
+of sensitivity, specificity, and accuracy, they aren't enough to definitively select one over the other.
 
 ### Classification - Conclusions
 
 As previously mentioned, both random forest and logistic regression models 
-perform relatively well on the data. However, we choose the random 
-forest model, given that itis slightly more accurate than the logistic model, 
+perform relatively well on the data. However, we have a slight preference for the random 
+forest model, given that it is slightly more accurate than the logistic model, 
 by 0.1%. 
 
 Let's take a look at both models' test confusion matrices. The logistic model
