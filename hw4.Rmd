@@ -5,7 +5,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Homework 4
 
-Research Questions: Our research question for a classification task will utilize the “qb_logs” dataframe. Using various measures of starting quarterback performance in a specific game (Passes Completed, Passes Attempted, Completion Percentage, Passing Yards, Passing Yards Per Attempt, TD Passes, INTs, Sacks, Sacked Yards Lost, Passer Rating, Rushing Attempts, Rushing Yards, Yards Per Carry, Rushing TDs, Fumbles, Fumbles Lost), we want to predict the outcome of the game (W or L) for the quarterback’s team. 
+Research Question: Our research question for a classification task will utilize the “qb_logs” dataframe. Using various measures of starting quarterback performance in a specific game (Passes Completed, Passes Attempted, Completion Percentage, Passing Yards, Passing Yards Per Attempt, TD Passes, INTs, Sacks, Sacked Yards Lost, Passer Rating, Rushing Attempts, Rushing Yards, Yards Per Carry, Rushing TDs, Fumbles, Fumbles Lost), we want to predict the outcome of the game (W or L) for the quarterback’s team. 
 
 ```{r, eval = TRUE}
 # library statements 
@@ -91,6 +91,8 @@ qb_logs[is.na(qb_logs)] = 0  #replaces NA values with 0
 
 ## Logistic Regression Model
 
+The first method we will explore to answer our classification question is a logistic regression model. 
+
 ```{r}
 logistic_mod <- logistic_reg() %>%
     set_engine("glm") %>%
@@ -104,6 +106,8 @@ logistic_mod_fit <- workflow() %>%
   add_recipe(outcome_rec) %>%
   fit(data = qb_logs)
 ```
+
+Here we show the output (model coefficients) from our trained logistic regression model. Then, we use a dot-and-whisker plot to examine the odd ratios represented by the exponentiated coefficient each predictor variable. 
 
 ```{r}
 logistic_mod_fit %>%
@@ -120,6 +124,8 @@ tidy(logistic_mod_fit) %>%  # Viz of Trained Model Odds Ratios
   theme_classic()
 ```
 
+A table that outputs our soft predictions for each game (case) in our dataframe.
+
 ```{r}
 # Soft Predictions: Predicted Probabilities
 logistic_output <-  qb_logs %>%
@@ -127,6 +133,8 @@ logistic_output <-  qb_logs %>%
 
 logistic_output %>% head()
 ```
+
+A box-and-whisker plot showing our predicted probability of winning vs. observed outcome (whether the QB's team won or lost the game). We can see from this plot that for QBs who lost the game (L), the median predicted probability of winning was around 0.25. For QBs who won the game (W), the median predicted probability of winning was around 0.75. 
 
 ```{r}
 # Visualize predicted probabilities as a function of true outcome
@@ -136,6 +144,8 @@ logistic_output %>%
   labs(y = 'Predicted Probability of Winning', x = 'Observed Outcome (L or W)') +
   theme_classic()
 ```
+
+Next, we evaluate the accuracy of our logistic regression model using a confusion matrix. Our model has an overall accuracy of 77.14% (7119 correct predictions / 9229 total cases). The sensitivity (true positive rate, where a positive is a W) of our model is 78.05% (3961 / 4999). The specificity (true negative rate, where a negative is a L) of our model is 76.18% (3428 / 4500). In the overall context of our research question, there are no advantages to favoring the sensitivity over the specificity or vice versa. At least for our purposes, the consequences of a false positive (predicting a QB W when the observed outcome is an L) are no worse or better than the consequences of a false negative (predicting a QB L when the observed outcome is a W). 
 
 ```{r}
 logistic_output %>%
@@ -148,10 +158,10 @@ logistic_output %>%
 logistic_output <- logistic_output %>%
   mutate(.pred_class = make_two_class_pred(.pred_L, levels(Outcome), threshold = .5)) #77.1 accuracy
 
-head(logistic_output)
+#head(logistic_output)
 
-logistic_output %>%
-  count(Outcome, .pred_class)
+#logistic_output %>%
+#  count(Outcome, .pred_class)
 
 logistic_output %>%
   conf_mat(truth = Outcome, estimate = .pred_class)
@@ -182,6 +192,8 @@ outcome_rf_wf <- workflow() %>%
   add_recipe(outcome_rf_rec)
 ```
 
+Here we calculate the OOB prediction error of our random forest model. From this value, we can calculate that our model accuracy is 1 - 0.2274 = 0.7726 or 77.26%.
+
 ```{r}
 set.seed(123)
 outcome_rf_fit <- outcome_rf_wf %>%
@@ -189,6 +201,8 @@ outcome_rf_fit <- outcome_rf_wf %>%
 
 outcome_rf_fit # check out OOB prediction error (accuracy = 1 - OOB prediction error)
 ```
+
+We also can calculate the sensitivity and specificity of our random forest model. Our model has a sensitivity of 77.89% and a specificity of 76.65%. As explained above, in the context of our data and research question, there is no advantage to prioritizing sensitivity over specificity or vice versa. 
 
 ```{r}
 outcome_rf_OOB_output <- tibble(
@@ -221,6 +235,8 @@ outcome_rf_OOB_output2 %>%
 outcome_rf_OOB_output2 %>% 
   roc_auc(Outcome, W, event_level = "second") #Area under Curve
 ```
+
+Finally, we have two different bar chart charts using our random forest model to give an indication of predictor variable importance. The first bar chart compares our predictors using their impurity (the total decrease in node impurities splitting on each predictor, averaged over all trees in the model). The second bar chart compares our predictors using their permutation importance (the difference between two accuracy values: a tree’s prediction accuracy in the OOB observations and the tree’s prediction accuracy computed after any association between the predictor and the outcome is broken by permuting the values of all individuals within that variable). We can see that Passer Rating is the most important variable according to both measures. However, after Passer Rating, variable importance varies between the two measures.
 
 ```{r}
 library(vip) #install.packages('vip')
