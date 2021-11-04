@@ -224,6 +224,9 @@ outcome_rf_fit2 <- outcome_rf_wf %>%
 outcome_rf_fit2
 ```
 
+The area under the ROC curve is approximately 0.851, indicating a strong performance
+of our model using bootstrapped data. 
+
 ```{r}
 outcome_rf_OOB_output2 <- bind_cols(
   outcome_rf_fit2 %>% extract_fit_engine() %>% pluck('predictions') %>% as_tibble(),
@@ -247,3 +250,25 @@ outcome_rf_wf %>% #based on permutation
   update_model(rf_spec %>% set_args(importance = "permutation")) %>%
   fit(data = qb_logs) %>% extract_fit_engine() %>% vip()
 ```
+
+### Summarizing Conclusions
+
+Overall, our random forest model performs well on the given data.
+Without bootstrapping, it generates a sensitivity of 77.89% and specificity of
+76.65%, showing a relatively strong performance in terms of true positive and
+true negative rates. It returns an accuracy rate of 77.25%.
+Bootstrapping the data also results in a strong performance, as illustrated by 
+the ROC's area of 0.85. 
+
+Comparing our random forest model to the logistic regression model, we see that
+there is no substantial difference in performance. Our logistic regression model
+returns similar rates for sensitivity of 78.05% and specificity of 76.18%.
+Its accuracy rate of 77.14% is also similar to that of our random forest model.
+
+There is no metric that really distinguishes the performance of either
+model.
+
+### Classification - Conclusions
+
+As previously mentioned, both random forest and logistic regression models 
+perform relatively well on the data. 
