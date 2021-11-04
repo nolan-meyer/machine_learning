@@ -273,6 +273,23 @@ of sensitivity, specificity, and accuracy, they aren't enough to really
 As previously mentioned, both random forest and logistic regression models 
 perform relatively well on the data. 
 
+Let's take a look at both models' test confusion matrices. The logistic model
+accurately predicts a loss 3428 / (3428 + 1038) = 76.76% of the time, while
+the random forest model accurately predicts a loss 3505 / (3505 + 1104) = 
+76.05% of the time. The logistic model is marginally more accurate in predicting 
+a loss given a quarterback's performance, which is measured by the given
+predictors. 
+
+The logistic regression model accurately predicts a win 3691 / (3691 + 1072) = 
+77.49% of the time, while the random forest model accurately predicts a win
+78.46% of the time. The random forest model is marginally more accurate in 
+predicting a win given a quarterback's performance, which is measured by 
+the given predictors. 
+
+As we can see once again, there is no real differentiating metric that shows
+which model is superior. Both models are relatively strong, performing with an
+acceptable amount of error.
+
 ```{r}
 logistic_output %>%
   conf_mat(truth = Outcome, estimate = .pred_class)
