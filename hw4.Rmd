@@ -271,7 +271,9 @@ of sensitivity, specificity, and accuracy, they aren't enough to really
 ### Classification - Conclusions
 
 As previously mentioned, both random forest and logistic regression models 
-perform relatively well on the data. 
+perform relatively well on the data. However, we choose the random 
+forest model, given that itis slightly more accurate than the logistic model, 
+by 0.1%. 
 
 Let's take a look at both models' test confusion matrices. The logistic model
 accurately predicts a loss 3428 / (3428 + 1038) = 76.76% of the time, while
@@ -286,9 +288,12 @@ The logistic regression model accurately predicts a win 3691 / (3691 + 1072) =
 predicting a win given a quarterback's performance, which is measured by 
 the given predictors. 
 
-As we can see once again, there is no real differentiating metric that shows
-which model is superior. Both models are relatively strong, performing with an
-acceptable amount of error.
+The random forest model also shows consistent performance in terms of variable
+importance for both impurity and permutation. Passer Rating, Passes Attempted, 
+and Passing Yards per Attempt are consistently among the most important 
+predictors of game outcome. While the other predictors vary in terms of
+importance, the model is still relatively consistent, and this is one of its
+strengths.
 
 ```{r}
 logistic_output %>%
