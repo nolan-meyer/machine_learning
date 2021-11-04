@@ -77,5 +77,81 @@ qb_comb <- qb_comb %>% mutate(Experience = as.numeric(stringr::str_extract(Exper
 qb_logs <- qb_logs %>% 
   filter(Season != "Preseason", Outcome != "T", `Games Started` == 1) %>% 
   select(-c(Position, Week, `Game Date`, Score, `Games Played`, `Games Started`, Name, `Player Id`, Year, Season, Opponent, `Home or Away`))
+
+qb_logs$Outcome <- as.factor(qb_logs$Outcome) 
+
+qb_logs <- qb_logs %>% 
+  mutate(Outcome = relevel(Outcome, ref='L')) #set reference level to be L
+
+qb_logs[is.na(qb_logs)] = 0  #replaces NA values with 0
 ```
 
+
+
+## Logistic Regression Model
+
+```{r}
+logistic_mod <- logistic_reg() %>%
+    set_engine("glm") %>%
+    set_mode('classification')
+
+outcome_rec <- recipe(Outcome ~ ., data = qb_logs) %>%
+  step_normalize(all_numeric_predictors())
+
+logistic_mod_fit <- workflow() %>%
+  add_model(logistic_mod) %>%
+  add_recipe(outcome_rec) %>%
+  fit(data = qb_logs)
+```
+
+```{r}
+logistic_mod_fit %>%
+  tidy() # Model Coefficients from Trained Model
+
+library(dotwhisker)
+tidy(logistic_mod_fit) %>%  # Viz of Trained Model Odds Ratios
+  mutate(conf.low = exp(estimate - 1.96*std.error),conf.high = exp(estimate + 1.96*std.error)) %>% # do this first
+  mutate(estimate = exp(estimate)) %>% # this second
+  dwplot(dot_args = list(size = 2, color = "black"),
+         whisker_args = list(color = "black"),
+         vline = geom_vline(xintercept = 1, color = "grey50", linetype = 2)) + 
+  labs(x = 'Odds Ratio') + 
+  theme_classic()
+```
+
+```{r}
+# Soft Predictions: Predicted Probabilities
+logistic_output <-  qb_logs %>%
+  bind_cols(predict(logistic_mod_fit, new_data = qb_logs, type = 'prob')) 
+
+logistic_output %>% head()
+```
+
+```{r}
+# Visualize predicted probabilities as a function of true outcome
+logistic_output %>%
+  ggplot(aes(x = Outcome, y = .pred_W)) +
+  geom_boxplot() + 
+  labs(y = 'Predicted Probability of Winning', x = 'Observed Outcome (L or W)') +
+  theme_classic()
+```
+
+```{r}
+logistic_output %>%
+  ggplot(aes(x = Outcome, y = .pred_L)) +
+  geom_boxplot() + 
+  geom_hline(yintercept = 0.5, color='red') + 
+  labs(y = 'Predicted Probability of LOSING', x = 'Observed Outcome (L or W)') +
+  theme_classic()
+
+logistic_output <- logistic_output %>%
+  mutate(.pred_class = make_two_class_pred(.pred_L, levels(Outcome), threshold = .5)) #77.1 accuracy
+
+head(logistic_output)
+
+logistic_output %>%
+  count(Outcome, .pred_class)
+
+logistic_output %>%
+  conf_mat(truth = Outcome, estimate = .pred_class)
+```
