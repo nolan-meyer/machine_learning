@@ -155,3 +155,78 @@ logistic_output %>%
 logistic_output %>%
   conf_mat(truth = Outcome, estimate = .pred_class)
 ```
+
+
+
+## Random Forest Model
+
+```{r}
+outcome_rf_rec <- recipe(Outcome ~ ., data = qb_logs) %>%
+  step_normalize(all_numeric_predictors())
+
+rf_spec <- rand_forest() %>%
+  set_engine(engine = 'ranger') %>% 
+  set_args(mtry = NULL, # size of random subset of variables; default is floor(sqrt(ncol(x)))
+           trees = 100, # Number of bags
+           min_n = 5,
+           probability = FALSE, # want hard predictions first
+           importance = 'impurity') %>% 
+  set_mode('classification') # change this for regression tree
+
+rf_spec
+
+
+outcome_rf_wf <- workflow() %>%
+  add_model(rf_spec) %>%
+  add_recipe(outcome_rf_rec)
+```
+
+```{r}
+set.seed(123)
+outcome_rf_fit <- outcome_rf_wf %>%
+  fit(data = qb_logs)
+
+outcome_rf_fit # check out OOB prediction error (accuracy = 1 - OOB prediction error)
+```
+
+```{r}
+outcome_rf_OOB_output <- tibble(
+  .pred_class = outcome_rf_fit %>% extract_fit_engine() %>% pluck('predictions'),
+  Outcome = qb_logs %>% pull(Outcome))
+
+bag_metrics <- metric_set(sens, yardstick::spec, accuracy)
+
+outcome_rf_OOB_output %>% 
+  bag_metrics(truth = Outcome, estimate = .pred_class)
+```
+
+```{r}
+set.seed(123) #to get the same bootstrap samples, use same seed
+outcome_rf_fit2 <- outcome_rf_wf %>%
+  update_model(rf_spec %>% set_args(probability = TRUE)) %>%
+  fit(data = qb_logs)
+
+outcome_rf_fit2
+```
+
+```{r}
+outcome_rf_OOB_output2 <- bind_cols(
+  outcome_rf_fit2 %>% extract_fit_engine() %>% pluck('predictions') %>% as_tibble(),
+  qb_logs %>% select(Outcome))
+
+outcome_rf_OOB_output2 %>% 
+  roc_curve(Outcome, W, event_level = "second") %>% autoplot()
+
+outcome_rf_OOB_output2 %>% 
+  roc_auc(Outcome, W, event_level = "second") #Area under Curve
+```
+
+```{r}
+library(vip) #install.packages('vip')
+
+outcome_rf_fit %>% extract_fit_engine() %>% vip() #based on impurity
+
+outcome_rf_wf %>% #based on permutation
+  update_model(rf_spec %>% set_args(importance = "permutation")) %>%
+  fit(data = qb_logs) %>% extract_fit_engine() %>% vip()
+```
