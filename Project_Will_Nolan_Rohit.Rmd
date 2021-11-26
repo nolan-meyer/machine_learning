@@ -158,7 +158,7 @@ lasso_rec <- recipe(Rating ~ Height + Age + Weight + Experience + College + hslo
     step_dummy(all_nominal_predictors())  # creates indicator variables for categorical variables
     
 ns3_lasso <- lasso_rec %>%
-  step_ns(Weight, deg_free = 3) %>% # natural cubic spline (higher deg_free means more knots)
+  step_ns(Weight, deg_free = 3) %>% # natural cubic splines (higher deg_free means more knots)
   step_ns(Height, deg_free = 3)
 
 #lasso_rec %>% prep(qb_comb) %>% juice()
