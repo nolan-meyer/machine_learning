@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Research Question: Our research question for a classification task will utilize the “qb_logs” dataframe. Using various measures of starting quarterback performance in a specific game (Passes Completed, Passes Attempted, Completion Percentage, Passing Yards, Passing Yards Per Attempt, TD Passes, INTs, Sacks, Sacked Yards Lost, Passer Rating, Rushing Attempts, Rushing Yards, Yards Per Carry, Rushing TDs, Fumbles, Fumbles Lost), we want to predict the outcome of the game (W or L) for the quarterback’s team. 
 
-```{r, eval = TRUE}
+```{r, eval = TRUE, include = FALSE}
 # library statements 
 # read in data
 library(dplyr)
@@ -112,7 +112,7 @@ logistic_mod_fit <- workflow() %>%
   fit(data = qb_logs)
 ```
 
-Here we show the output (model coefficients) from our trained logistic regression model. Then, we use a dot-and-whisker plot to examine the odd ratios represented by the exponentiated coefficient each predictor variable. 
+Here we show the output (model coefficients) from our trained logistic regression model. Then, we use a dot-and-whisker plot to examine the odds ratios represented by the exponentiated coefficient each predictor variable. 
 
 ```{r}
 logistic_mod_fit %>%
