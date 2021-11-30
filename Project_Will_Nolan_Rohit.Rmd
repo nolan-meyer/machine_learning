@@ -245,7 +245,11 @@ lasso_rec <- recipe(Rating ~ Height + Age + Weight + Experience + Conference + h
     
 ns3_lasso <- lasso_rec %>%
   step_ns(Weight, deg_free = 3) %>% # natural cubic splines (higher deg_free means more knots)
-  step_ns(Height, deg_free = 3)
+  step_ns(Height, deg_free = 3) %>% 
+  step_ns(Age, deg_free = 3) %>% 
+  step_ns(Experience, deg_free = 3) %>% 
+  step_ns(`Games Played`, deg_free = 2) 
+  
 
 #lasso_rec %>% prep(qb_comb) %>% juice()
 
@@ -317,7 +321,7 @@ d.
 ```{r}
 # visual residuals
 mod1_output <- qb_comb %>%
-  bind_cols(predict(final_fit, new_data = qb_comb)) %>%
+    bind_cols(predict(final_fit, new_data = qb_comb)) %>%
     mutate(resid = Rating - .pred)
 
 #Height (some non-linearity)
@@ -357,6 +361,20 @@ ggplot(mod1_output, aes(x = Conference, y = resid)) +
 
 #High School State
 ggplot(mod1_output, aes(x = hsState, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") + 
+    theme_classic() 
+
+#Passes Attempted
+ggplot(mod1_output, aes(x = `Passes Attempted`, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") + 
+    theme_classic() 
+
+#Games Played
+ggplot(mod1_output, aes(x = `Games Played`, y = resid)) +
     geom_point() +
     geom_smooth() +
     geom_hline(yintercept = 0, color = "red") + 
@@ -402,10 +420,11 @@ lm_rec <- recipe(Rating ~ Height + Age + Weight + Experience + Conference + hsSt
    
  
 ns3_OLS <- lm_rec %>%
-  step_ns(Weight, deg_free = 3) %>% # natural cubic spline (higher deg_free means more knots)
+  step_ns(Weight, deg_free = 3) %>% # natural cubic splines (higher deg_free means more knots)
   step_ns(Height, deg_free = 3) %>% 
-    step_ns(Age, deg_free = 3) %>% 
-    step_ns(`Games Played`, deg_free = 2)
+  step_ns(Age, deg_free = 3) %>% 
+  step_ns(Experience, deg_free = 3) %>% 
+  step_ns(`Games Played`, deg_free = 2) 
   
 
 #OLS workflow
