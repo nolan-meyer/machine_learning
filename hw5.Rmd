@@ -114,3 +114,18 @@ qb_logs <- qb_logs %>%
 plot(hc_complete, labels = qb_logs$hclust_height3)
 
 ```
+
+```{r}
+mat <- qb_logs %>%
+  select(-Outcome,-hclust_height3,-hclust_num6) %>%
+  as.matrix()
+
+pca_out <- prcomp(mat, center = TRUE, scale = TRUE)
+pca_out %>% pluck('rotation') %>% head()
+
+
+pca_out %>% pluck('x') %>% as.data.frame() %>% select(PC1,PC2) %>% bind_cols(
+  
+  tibble(cluster = qb_logs$hclust_height3, Outcome = qb_logs$Outcome)
+) 
+```
