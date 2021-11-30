@@ -4,3 +4,98 @@ knitr::opts_chunk$set(echo=TRUE, eval=FALSE)
 
 # Homework 5 - Clustering
 
+```{r, eval = TRUE, include = FALSE}
+# library statements 
+# read in data
+library(dplyr)
+library(readr)
+library(broom)
+library(ggplot2)
+library(tidymodels) 
+library(tidyverse)
+library(probably)
+tidymodels_prefer() # Resolves conflicts, prefers tidymodel functions
+
+set.seed(123)
+
+basic_stats <- read_csv("Basic_Stats.csv")
+qb_stats <- read_csv("Career_Stats_Passing.csv")
+qb_logs <- read_csv("Game_Logs_Quarterback.csv",na=c("","--","NA"))
+```
+
+```{r}
+# data cleaning
+qb_stats <- qb_stats %>%
+    select(-Position)
+    
+qb_stats <- qb_stats %>%
+    rename("Rating" = "Passer Rating")
+
+basic_stats <- basic_stats %>%
+    rename("Team" = "Current Team")
+
+basic_stats <- basic_stats %>%
+    rename("hsloc" = "High School Location")
+
+basic_stats <- basic_stats %>%
+    rename("Weight" = "Weight (lbs)")
+
+basic_stats <- basic_stats %>%
+    rename("Height" = "Height (inches)")
+
+basic_stats <- basic_stats %>%
+    filter(Position == "QB")
+
+qb_comb <- merge(qb_stats, basic_stats, by="Name")
+
+
+qb_comb$`Passes Attempted`[which(qb_comb$`Passes Attempted` == '--')] = 0
+qb_comb <- qb_comb %>%
+  mutate(`Passes Attempted` = as.numeric(`Passes Attempted`)) %>% 
+    mutate(`Games Played` = as.numeric(`Games Played`))
+
+qb_comb <- qb_comb %>% select(-c(Number, `Years Played`))
+
+
+qb_comb <- qb_comb %>% mutate(Experience = as.numeric(stringr::str_extract(Experience,'[0-9]+')))
+
+
+
+qb_logs <- qb_logs %>% 
+  filter(Season != "Preseason", Outcome != "T", `Games Started` == 1) %>% 
+  select(-c(Position, Week, `Game Date`, Score, `Games Played`, `Games Started`, Name, `Player Id`, Year, Season, Opponent, `Home or Away`))
+
+qb_logs$Outcome <- as.factor(qb_logs$Outcome) 
+
+qb_logs <- qb_logs %>% 
+  mutate(Outcome = relevel(Outcome, ref='L')) #set reference level to be L
+
+qb_logs[is.na(qb_logs)] = 0  #replaces NA values with 0
+```
+
+
+```{r}
+# Select the variables to be used in clustering
+qb_logs_sub <- qb_logs %>%
+    select(-Outcome)
+
+# Summary statistics for the variables
+summary(qb_logs_sub)
+
+# Compute a distance matrix on the scaled data
+dist_mat_scaled <- dist(scale(qb_logs_sub))
+
+# The (scaled) distance matrix is the input to hclust()
+# The method argument indicates the linkage type
+hc_complete <- hclust(dist_mat_scaled, method = "complete")
+hc_single <- hclust(dist_mat_scaled, method = "single")
+hc_average <- hclust(dist_mat_scaled, method = "average")
+hc_centroid <- hclust(dist_mat_scaled, method = "centroid")
+
+# Plot dendrograms
+plot(hc_complete)
+plot(hc_single)
+plot(hc_average)
+plot(hc_centroid)
+```
+```
