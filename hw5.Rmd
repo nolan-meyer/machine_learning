@@ -75,6 +75,12 @@ qb_logs[is.na(qb_logs)] = 0  #replaces NA values with 0
 
 
 ```{r}
+
+# Random subsample of 50 penguins
+set.seed(253)
+qb_logs <- qb_logs %>%
+    slice_sample(n = 50)
+
 # Select the variables to be used in clustering
 qb_logs_sub <- qb_logs %>%
     select(-Outcome)
@@ -98,4 +104,13 @@ plot(hc_single)
 plot(hc_average)
 plot(hc_centroid)
 ```
+```{r}
+qb_logs <- qb_logs %>%
+    mutate(
+        hclust_height3 = factor(cutree(hc_complete, h = 3)), # Cut at height (h) 3
+        hclust_num6 = factor(cutree(hc_complete, k = 6)) # Cut into 6 clusters (k)
+    )
+
+plot(hc_complete, labels = qb_logs$hclust_height3)
+
 ```
