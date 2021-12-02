@@ -129,7 +129,15 @@ pca_out %>% pluck('x') %>% as.data.frame() %>% select(PC1,PC2) %>% bind_cols(
   tibble(cluster = qb_logs$hclust_height3, Outcome = qb_logs$Outcome)
 ) 
 ```
+```{r}
+pca_out %>% head()
+```
 
+```{r}
+pca_out$rotation %>% as.data.frame() %>% select(PC1) %>%
+    abs() %>%
+    arrange(desc(PC1))
+```
 
 ```{r}
 pca_out %>% 
@@ -141,4 +149,33 @@ pca_out %>%
     labs(x = 'PC1', y = 'PC2') +
     scale_color_viridis_d() +
     theme_classic()
+```
+```{r}
+var_explained <- (pca_out %>% pluck('sdev'))^2
+pve <- var_explained/sum(var_explained)
+
+var_data <- tibble(
+    PC = seq_len(length(var_explained)),
+    var_explained = var_explained,
+    pve = pve
+)
+    
+# Construct scree plots
+p1 <- var_data %>%
+    ggplot(aes(x = PC, y = pve)) +
+    geom_point() + 
+    geom_line() + 
+    labs(x = 'Principal Component', y = 'Proportion of varinace explained') +
+    theme_classic()
+
+p2 <- var_data %>%
+    ggplot(aes(x = PC, y = cumsum(pve))) +
+    geom_point() + 
+    geom_line() + 
+    labs(x = 'Principal Component', y = 'Cumulative proportion of variance explained') +
+    theme_classic()
+
+library(ggpubr) 
+ggarrange(p1, p2)
+
 ```
