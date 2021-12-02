@@ -544,6 +544,7 @@ logistic_output %>% head()
 logistic_output %>%
   ggplot(aes(x = Outcome, y = .pred_W)) +
   geom_boxplot() + 
+  geom_hline(yintercept = 0.5, color='red') + 
   labs(y = 'Predicted Probability of Winning', x = 'Observed Outcome (L or W)') +
   theme_classic()
 ```
@@ -571,6 +572,22 @@ logistic_output %>%
   conf_mat(truth = Outcome, estimate = .pred_class)
 ```
 
+
+## CV Accuracy Metrics
+
+```{r}
+set.seed(1512)
+qblogs_cv10 <- vfold_cv(qb_logs, v=10)
+
+# CV Fit Model
+log_cv_fit <- fit_resamples(
+    logistic_mod_fit, 
+    resamples = qblogs_cv10,
+    metrics = metric_set(sens, yardstick::spec, accuracy, roc_auc),
+    control = control_resamples(save_pred = TRUE, event_level = 'second'))  # you need predictions for ROC calculations
+
+collect_metrics(log_cv_fit) #default threshold is 0.5
+```
 
 
 ## Random Forest Model
