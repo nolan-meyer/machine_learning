@@ -138,6 +138,9 @@ pca_out$rotation %>% as.data.frame() %>% select(PC1) %>%
     abs() %>%
     arrange(desc(PC1))
 ```
+Our PC1 equation shows passing yards, passer rating, and completion percentage 
+to be the most important variables in explaining the most variation in the 
+data.
 
 ```{r}
 pca_out %>% 
@@ -150,6 +153,10 @@ pca_out %>%
     scale_color_viridis_d() +
     theme_classic()
 ```
+
+Wins and losses are generally clustered together, with win outcomes having 
+higher PC1 and PC2 values and loss outcomes having lower PC1 and PC2 values.
+
 ```{r}
 var_explained <- (pca_out %>% pluck('sdev'))^2
 pve <- var_explained/sum(var_explained)
