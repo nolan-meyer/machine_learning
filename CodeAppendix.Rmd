@@ -748,9 +748,14 @@ pca_out %>% head()
 
 ```{r}
 pca_out$rotation %>% as.data.frame() %>% select(PC1) %>%
-    abs() %>%
-    arrange(desc(PC1))
+    #abs() %>%
+    arrange(desc(abs(PC1)))
+
+pca_out$rotation %>% as.data.frame() %>% select(PC2) %>%
+    #abs() %>%
+    arrange(desc(abs(PC2)))
 ```
+
 
 ```{r}
 pca_out %>% 
