@@ -32,7 +32,7 @@ set.seed(123)
 # Read in data
 basic_stats <- read_csv("Basic_Stats.csv")
 qb_stats <- read_csv("Career_Stats_Passing.csv")
-qb_logs <- read_csv("Game_Logs_Quarterback.csv")
+qb_logs <- read_csv("Game_Logs_Quarterback.csv",na=c("","--","NA"))
 ```
 
 ```{r}
@@ -686,11 +686,111 @@ outcome_rf_OOB_output %>%
 
 
 
-
-
 # Clustering
 
+## Dendrograms 
+
+```{r}
+# Select the variables to be used in clustering
+qb_logs_sub <- qb_logs %>%
+    select(-Outcome)
+
+# Summary statistics for the variables
+summary(qb_logs_sub)
+
+# Compute a distance matrix on the scaled data
+dist_mat_scaled <- dist(scale(qb_logs_sub))
+
+# The (scaled) distance matrix is the input to hclust()
+# The method argument indicates the linkage type
+hc_complete <- hclust(dist_mat_scaled, method = "complete")
+hc_single <- hclust(dist_mat_scaled, method = "single")
+hc_average <- hclust(dist_mat_scaled, method = "average")
+hc_centroid <- hclust(dist_mat_scaled, method = "centroid")
+
+# Plot dendrograms
+plot(hc_complete)
+plot(hc_single)
+plot(hc_average)
+plot(hc_centroid)
+```
+
+```{r}
+qb_logs <- qb_logs %>%
+    mutate(
+        hclust_height3 = factor(cutree(hc_complete, h = 3)), # Cut at height (h) 3
+        hclust_num6 = factor(cutree(hc_complete, k = 6)) # Cut into 6 clusters (k)
+    )
+
+plot(hc_complete, labels = qb_logs$hclust_height3)
+
+```
+
+## PCA
+
+```{r}
+mat <- qb_logs %>%
+  select(-Outcome,-hclust_height3,-hclust_num6) %>%
+  as.matrix()
+
+pca_out <- prcomp(mat, center = TRUE, scale = TRUE)
+pca_out %>% pluck('rotation') %>% head()
 
 
+pca_out %>% pluck('x') %>% as.data.frame() %>% select(PC1,PC2) %>% bind_cols(
+  
+  tibble(cluster = qb_logs$hclust_height3, Outcome = qb_logs$Outcome)
+) 
+```
+```{r}
+pca_out %>% head()
+```
 
+```{r}
+pca_out$rotation %>% as.data.frame() %>% select(PC1) %>%
+    abs() %>%
+    arrange(desc(PC1))
+```
+
+```{r}
+pca_out %>% 
+    pluck('x') %>%
+    as.data.frame() %>%
+    mutate(labels = qb_logs$Outcome) %>%
+    ggplot(aes(x = PC1, y = PC2, color = factor(labels))) + 
+    geom_point() +
+    labs(x = 'PC1', y = 'PC2') +
+    scale_color_viridis_d() +
+    theme_classic()
+```
+
+```{r}
+var_explained <- (pca_out %>% pluck('sdev'))^2
+pve <- var_explained/sum(var_explained)
+
+var_data <- tibble(
+    PC = seq_len(length(var_explained)),
+    var_explained = var_explained,
+    pve = pve
+)
+    
+# Construct scree plots
+p1 <- var_data %>%
+    ggplot(aes(x = PC, y = pve)) +
+    geom_point() + 
+    geom_line() + 
+    labs(x = 'Principal Component', y = 'Proportion of varinace explained') +
+    theme_classic()
+
+p2 <- var_data %>%
+    ggplot(aes(x = PC, y = cumsum(pve))) +
+    geom_point() + 
+    geom_line() + 
+    labs(x = 'Principal Component', y = 'Cumulative proportion of variance explained') +
+    theme_classic()
+
+library(ggpubr) 
+ggarrange(p1, p2)
+
+```
 
