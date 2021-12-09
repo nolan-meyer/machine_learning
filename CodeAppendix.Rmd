@@ -245,7 +245,7 @@ lasso_wf <- workflow() %>%
 
 
 ```{r}
-# fit & tune models
+# fit & tune LASSO model
 lm_lasso_spec_tune <- 
   linear_reg() %>%
   set_args(mixture = 1, penalty = tune()) %>% ## tune() indicates that we will try a variety of values
@@ -282,11 +282,11 @@ final_fit <- fit(final_wf, data = qb_comb)
 
 output <- tidy(final_fit) 
 
-output %>% arrange(desc(estimate))
+output %>% arrange(desc(estimate)) #sort variables in the LASSO model by coefficient value (a way of measuring variable importance)
 ```
 
 
-### OLS CV Metrics
+### LASSO CV Metrics
 
 ```{r}
 #  calculate/collect CV metrics
@@ -366,6 +366,42 @@ ggplot(mod1_output, aes(x = `Games Played`, y = resid)) +
     geom_smooth() +
     geom_hline(yintercept = 0, color = "red") + 
     theme_classic() 
+```
+
+
+#OLS Model w/o splines
+
+```{r}
+lm_spec <- 
+  linear_reg() %>%
+  set_engine(engine = 'lm') %>%
+  set_mode('regression') 
+
+#OLS recipe
+lm_rec <- recipe(Rating ~ Height + Age + Weight + Experience + Conference + hsState + `Passes Attempted` + `Games Played`, data = qb_comb) %>% 
+    update_role(`Passes Attempted`, new_role = 'Info') %>%
+    update_role(`Games Played`, new_role = 'Info') %>%
+    step_filter(`Passes Attempted` >= 50, `Games Played` > 0) %>% #removes potential outliers with few passes
+    #step_lincomb(all_numeric_predictors()) %>% # removes predictors that are linear combos of others
+    #step_corr(all_numeric_predictors()) %>% #removes highly correlated variables
+    step_other(all_nominal_predictors(),threshold = .05)  %>%
+    step_dummy(all_nominal_predictors())  # creates indicator variables for categorical variables
+
+#OLS workflow
+lm_wf <- workflow() %>%
+  add_recipe(lm_rec) %>%
+  add_model(lm_spec)
+
+fit(lm_wf, data = qb_comb) %>% tidy()
+
+#calculate/collect CV metrics
+lm_cv <- fit_resamples(lm_wf,
+  resamples = qbcomb_cv, 
+  metrics = metric_set(rmse, rsq, mae))
+
+lm_cv %>% collect_metrics()
+
+#OLS w/o splines is far worse than incorporating natural cubic splines into the model
 ```
 
     
