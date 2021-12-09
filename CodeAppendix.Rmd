@@ -714,12 +714,13 @@ outcome_rf_wf %>% #based on permutation
 ### Model Comparison
 
 ```{r}
-logistic_output %>%
-  conf_mat(truth = Outcome, estimate = .pred_class)
+collect_metrics(log_cv_fit) #CV Logistic Model
 
-outcome_rf_OOB_output %>%
-  conf_mat(truth = Outcome, estimate = .pred_class)
 
+outcome_rf_OOB_output %>%  #RF OOB Accuracy
+  bag_metrics(truth = Outcome, estimate = .pred_class)
+outcome_rf_OOB_output2 %>%  #RF AUC
+  roc_auc(Outcome, W, event_level = "second")
 ```
 
 
@@ -782,7 +783,7 @@ pca_out_plot <- pca_out %>% pluck('x') %>% as.data.frame() %>% select(PC1,PC2) %
 ) 
 ```
 
-```{r}
+```{r, results='hide'}
 pca_out %>% head()
 ```
 
