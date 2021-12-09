@@ -286,7 +286,7 @@ output %>% arrange(desc(estimate)) #sort variables in the LASSO model by coeffic
 ```
 
 
-### LASSO CV Metrics
+###LASSO w/ splines CV Metrics
 
 ```{r}
 #  calculate/collect CV metrics
