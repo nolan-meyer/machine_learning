@@ -280,7 +280,9 @@ final_wf <- finalize_workflow(lasso_wf, best_penalty) # incorporates penalty val
 
 final_fit <- fit(final_wf, data = qb_comb)
 
-tidy(final_fit)
+output <- tidy(final_fit) 
+
+output %>% arrange(desc(estimate))
 ```
 
 
