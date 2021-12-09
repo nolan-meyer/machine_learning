@@ -76,10 +76,6 @@ qb_logs[is.na(qb_logs)] = 0  #replaces NA values with 0
 
 ```{r}
 
-# Random subsample of 50 penguins
-#set.seed(253)
-#qb_logs <- qb_logs %>%
-#    slice_sample(n = 50)
 
 # Select the variables to be used in clustering
 qb_logs_sub <- qb_logs %>%
@@ -146,7 +142,7 @@ data.
 pca_out %>% 
     pluck('x') %>%
     as.data.frame() %>%
-    mutate(labels = qb_logs$Outcome) %>%
+    mutate(labels = qb_logs$Ints) %>%
     ggplot(aes(x = PC1, y = PC2, color = factor(labels))) + 
     geom_point() +
     labs(x = 'PC1', y = 'PC2') +

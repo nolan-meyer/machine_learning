@@ -757,10 +757,11 @@ plot(hc_centroid)
 qb_logs <- qb_logs %>%
     mutate(
         hclust_height3 = factor(cutree(hc_complete, h = 3)), # Cut at height (h) 3
-        hclust_num6 = factor(cutree(hc_complete, k = 6)) # Cut into 6 clusters (k)
+        hclust_num6 = factor(cutree(hc_complete, k = 3)) # Cut into 6 clusters (k)
     )
 
 plot(hc_complete, labels = qb_logs$hclust_height3)
+plot(hc_complete, labels = qb_logs$hclust_num6)
 
 ```
 
@@ -775,11 +776,12 @@ pca_out <- prcomp(mat, center = TRUE, scale = TRUE)
 pca_out %>% pluck('rotation') %>% head()
 
 
-pca_out %>% pluck('x') %>% as.data.frame() %>% select(PC1,PC2) %>% bind_cols(
+pca_out_plot <- pca_out %>% pluck('x') %>% as.data.frame() %>% select(PC1,PC2) %>% bind_cols(
   
-  tibble(cluster = qb_logs$hclust_height3, Outcome = qb_logs$Outcome)
+  tibble(cluster = qb_logs$hclust_num6, Outcome = qb_logs$Outcome)
 ) 
 ```
+
 ```{r}
 pca_out %>% head()
 ```
@@ -800,6 +802,16 @@ pca_out %>%
     pluck('x') %>%
     as.data.frame() %>%
     mutate(labels = qb_logs$Outcome) %>%
+    ggplot(aes(x = PC1, y = PC2, color = factor(labels))) + 
+    geom_point() +
+    labs(x = 'PC1', y = 'PC2') +
+    scale_color_viridis_d() +
+    theme_classic()
+
+pca_out %>% 
+    pluck('x') %>%
+    as.data.frame() %>%
+    mutate(labels = qb_logs$hclust_num6) %>%
     ggplot(aes(x = PC1, y = PC2, color = factor(labels))) + 
     geom_point() +
     labs(x = 'PC1', y = 'PC2') +
