@@ -75,8 +75,6 @@ qb_logs[is.na(qb_logs)] = 0  #replaces NA values with 0
 
 
 ```{r}
-
-
 # Select the variables to be used in clustering
 qb_logs_sub <- qb_logs %>%
     select(-Outcome)

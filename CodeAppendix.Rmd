@@ -757,7 +757,7 @@ plot(hc_centroid)
 qb_logs <- qb_logs %>%
     mutate(
         hclust_height3 = factor(cutree(hc_complete, h = 3)), # Cut at height (h) 3
-        hclust_num6 = factor(cutree(hc_complete, k = 3)) # Cut into 6 clusters (k)
+        hclust_num6 = factor(cutree(hc_complete, k = 4)) # Cut into 3 clusters (k)
     )
 
 plot(hc_complete, labels = qb_logs$hclust_height3)
@@ -779,7 +779,8 @@ pca_out %>% pluck('rotation') %>% head()
 pca_out_plot <- pca_out %>% pluck('x') %>% as.data.frame() %>% select(PC1,PC2) %>% bind_cols(
   
   tibble(cluster = qb_logs$hclust_num6, Outcome = qb_logs$Outcome)
-) 
+)
+
 ```
 
 ```{r}
