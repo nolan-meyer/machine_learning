@@ -226,16 +226,14 @@ lasso_rec <- recipe(Rating ~ Height + Age + Weight + Experience + Conference + h
     step_novel(all_nominal_predictors()) %>% # important if you have rare categorical variables 
     step_normalize(all_numeric_predictors()) %>%  # important standardization step for LASSO
     step_dummy(all_nominal_predictors())  # creates indicator variables for categorical variables
-    
+
+#Adding natural cubic splines to LASSO recipe    
 ns3_lasso <- lasso_rec %>%
   step_ns(Weight, deg_free = 3) %>% # natural cubic splines (higher deg_free means more knots)
   step_ns(Height, deg_free = 3) %>% 
   step_ns(Age, deg_free = 3) %>% 
   step_ns(Experience, deg_free = 3) %>% 
   step_ns(`Games Played`, deg_free = 2) 
-  
-
-#lasso_rec %>% prep(qb_comb) %>% juice()
 
 #LASSO workflow
 lasso_wf <- workflow() %>% 
@@ -282,7 +280,7 @@ final_fit <- fit(final_wf, data = qb_comb)
 
 output <- tidy(final_fit) 
 
-output %>% arrange(desc(estimate)) #sort variables in the LASSO model by coefficient value (a way of measuring variable importance)
+output %>% arrange(desc(estimate)) #sort variables in the LASSO w/ splines model by coefficient value (a way of measuring variable importance)
 ```
 
 
@@ -292,14 +290,9 @@ output %>% arrange(desc(estimate)) #sort variables in the LASSO model by coeffic
 #  calculate/collect CV metrics
 mod1_cv <- fit_resamples(final_fit,
   resamples = qbcomb_cv, 
-  metrics = metric_set(rmse, rsq, mae)
-)
+  metrics = metric_set(rmse, rsq, mae))
 
 mod1_cv %>% collect_metrics()
-
-collect_metrics(tune_res) %>% 
-  filter(.metric == "rmse") %>% 
-  select(penalty, rmse = mean)
 ```
 
  
