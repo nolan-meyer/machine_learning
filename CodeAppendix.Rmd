@@ -180,7 +180,7 @@ qbcomb_cv <- vfold_cv(qb_comb, v = 10)
 ```
 
 
-##LASSO (No Splines) 
+## LASSO (No Splines) 
 
 ```{r}
 #Model spec. Fit & tune LASSO model
@@ -233,6 +233,8 @@ output <- tidy(final_fit0)
 output %>% arrange(desc(estimate)) #sort variables in the LASSO w/o splines model by coefficient value (a way of measuring variable importance)
 ```
 
+### LASO (No Splines) CV Metrics
+
 ```{r}
 #  calculate/collect CV metrics
 mod2_cv <- fit_resamples(final_fit0,
@@ -244,6 +246,7 @@ mod2_cv %>% collect_metrics()
 #LASSO w/o splines is a far less accurate predictor of QB rating than the LASSO w/ splines model
 ```
 
+## LASSO w/ Splines
 
 ```{r}
 # recipes & workflows
@@ -269,7 +272,7 @@ ns3_lasso <- lasso_rec %>%
 #LASSO workflow
 lasso_wf <- workflow() %>% 
   add_recipe(ns3_lasso) %>%
-  add_model(lm_lasso_spec)
+  add_model(lm_lasso_spec_tune)
 ```
 
 
@@ -315,7 +318,7 @@ output %>% arrange(desc(estimate)) #sort variables in the LASSO w/ splines model
 ```
 
 
-###LASSO with Splines CV Metrics
+### LASSO with Splines CV Metrics
 
 ```{r}
 #  calculate/collect CV metrics
@@ -329,7 +332,7 @@ mod1_cv %>% collect_metrics()
 ```
 
  
-### OLS Residual Evaluation
+## OLS Residual Evaluation
 
 ```{r}
 # visual residuals
@@ -396,7 +399,7 @@ ggplot(mod1_output, aes(x = `Games Played`, y = resid)) +
 ```
 
 
-#OLS Model (No Splines)
+## OLS Model (No Splines)
 
 ```{r}
 #OLS model spec
@@ -421,7 +424,11 @@ lm_wf <- workflow() %>%
   add_model(lm_spec)
 
 fit(lm_wf, data = qb_comb) %>% tidy()
+```
 
+### OLS Model (No Splines) CV Metrics
+
+```{r}
 #calculate/collect CV metrics
 lm_cv <- fit_resamples(lm_wf,
   resamples = qbcomb_cv, 
@@ -433,7 +440,7 @@ lm_cv %>% collect_metrics()
 ```
 
     
-## OLS Model with Splines  
+## OLS Model w/ Splines  
 
 ```{r}
 #qb_comb %>% purrr::map(~sum(is.na(.)))
@@ -468,7 +475,11 @@ splines_wf <- workflow() %>%
   add_model(lm_spec)
 
 fit(splines_wf, data = qb_comb) %>% tidy()
+```
 
+### OLS Model w/ Splines CV Metrics
+
+```{r}
 #calculate/collect CV metrics
 splines_cv <- fit_resamples(splines_wf,
   resamples = qbcomb_cv, 
@@ -637,7 +648,7 @@ logistic_output %>%
 ```
 
 
-## CV Accuracy Metrics
+### CV Accuracy Metrics
 
 ```{r}
 set.seed(1512)
@@ -737,7 +748,7 @@ outcome_rf_wf %>% #based on permutation
   fit(data = qb_logs) %>% extract_fit_engine() %>% vip()
 ```
 
-### Model Comparison
+## Model Comparison
 
 ```{r}
 collect_metrics(log_cv_fit) #CV Logistic Model
