@@ -395,7 +395,7 @@ lm_cv <- fit_resamples(lm_wf,
 
 lm_cv %>% collect_metrics()
 
-#OLS w/o splines is far worse than incorporating natural cubic splines into the model
+#OLS w/o splines is far worse than an OLS model incorporating natural cubic splines
 ```
 
     
