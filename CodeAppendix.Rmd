@@ -174,48 +174,79 @@ qb_logs[is.na(qb_logs)] = 0  #replaces NA values with 0
 
 # Regression
 
-## OLS
-
 ```{r}
 # creation of cv folds
 qbcomb_cv <- vfold_cv(qb_comb, v = 10)
 ```
 
+
+##LASSO (No Splines) 
+
 ```{r}
-# model spec
-
-#OLS spec
-lm_spec <- 
-    linear_reg() %>% 
-    set_engine(engine = 'lm') %>% 
-    set_mode('regression') 
-
-#LASSO spec
-lm_lasso_spec <- 
+#Model spec. Fit & tune LASSO model
+lm_lasso_spec_tune <- 
   linear_reg() %>%
-  set_args(mixture = 1, penalty = tune()) %>% ## mixture = 1 indicates Lasso, we'll choose penalty later
-  set_engine(engine = 'glmnet') %>% 
+  set_args(mixture = 1, penalty = tune()) %>% ## tune() indicates that we will try a variety of values
+  set_engine(engine = 'glmnet') %>%
   set_mode('regression') 
+
+
+#LASSO recipe
+lasso_rec <- recipe(Rating ~ Height + Age + Weight + Experience + Conference + hsState + `Passes Attempted` + `Games Played`, data = qb_comb) %>%
+    update_role(`Passes Attempted` , new_role = 'Info') %>%
+    update_role(`Games Played` , new_role = 'Info') %>%
+    step_filter(`Passes Attempted` >= 50, `Games Played` > 0) %>% #removes potential outliers with few passes
+    step_nzv(all_predictors()) %>% # removes variables with the same value
+    step_novel(all_nominal_predictors()) %>% # important if you have rare categorical variables 
+    step_normalize(all_numeric_predictors()) %>%  # important standardization step for LASSO
+    step_dummy(all_nominal_predictors())  # creates indicator variables for categorical variables
+
+#LASSO workflow
+lasso_wf <- workflow() %>% 
+  add_recipe(lasso_rec) %>%
+  add_model(lm_lasso_spec_tune) 
+
+penalty_grid <- grid_regular(
+  penalty(range = c(-5, 3)), #log10 transformed 10^-5 to 10^3
+  levels = 50)
+
+tune_res <- tune_grid( # new function for tuning hyperparameters
+  lasso_wf, # workflow
+  resamples = qbcomb_cv, # folds
+  metrics = metric_set(rmse),
+  grid = penalty_grid) # penalty grid
+
+autoplot(tune_res)
+
+collect_metrics(tune_res) %>%
+  filter(.metric == 'rmse') %>%
+  select(penalty, rmse = mean) 
+
+best_penalty <- select_best(tune_res, metric = 'rmse') # choose best penalty value
+
+final_wf <- finalize_workflow(lasso_wf, best_penalty) # incorporates penalty value to workflow
+
+final_fit0 <- fit(final_wf, data = qb_comb)
+
+output <- tidy(final_fit0) 
+
+output %>% arrange(desc(estimate)) #sort variables in the LASSO w/o splines model by coefficient value (a way of measuring variable importance)
 ```
 
 ```{r}
+#  calculate/collect CV metrics
+mod2_cv <- fit_resamples(final_fit0,
+  resamples = qbcomb_cv, 
+  metrics = metric_set(rmse, rsq, mae))
+
+mod2_cv %>% collect_metrics()
+
+#LASSO w/o splines is a far less accurate predictor of QB rating than the LASSO w/ splines model
+```
+
+
+```{r}
 # recipes & workflows
-
-#OLS recipe
-lm_rec <- recipe(Rating ~ Height + Age + Weight + Experience + Conference + hsState + `Passes Attempted` + `Games Played`, data = qb_comb) %>% 
-    update_role(`Passes Attempted`, new_role = 'Info') %>%
-    update_role(`Games Played`, new_role = 'Info') %>%
-    step_filter(`Passes Attempted` >= 50, `Games Played` > 0) %>% #removes potential outliers with few passes
-    step_lincomb(all_numeric_predictors()) %>% # removes predictors that are linear combos of others
-    step_corr(all_predictors()) %>% #removes highly correlated variables
-    step_dummy(all_nominal_predictors()) # creates indicator variables for categorical variables
-    
-
-#OLS workflow
-lm_wf <- workflow() %>%
-  add_recipe(lm_rec) %>%
-  add_model(lm_spec)
-
 
 #LASSO recipe
 lasso_rec <- recipe(Rating ~ Height + Age + Weight + Experience + Conference + hsState + `Passes Attempted` + `Games Played`, data = qb_comb) %>%
@@ -284,7 +315,7 @@ output %>% arrange(desc(estimate)) #sort variables in the LASSO w/ splines model
 ```
 
 
-###LASSO w/ splines CV Metrics
+###LASSO with Splines CV Metrics
 
 ```{r}
 #  calculate/collect CV metrics
@@ -293,6 +324,8 @@ mod1_cv <- fit_resamples(final_fit,
   metrics = metric_set(rmse, rsq, mae))
 
 mod1_cv %>% collect_metrics()
+
+#LASSO w/ Splines is a far better model for predicting QB passer rating than the ordinary LASSO model.
 ```
 
  
@@ -363,14 +396,15 @@ ggplot(mod1_output, aes(x = `Games Played`, y = resid)) +
 ```
 
 
-#OLS Model w/o splines
+#OLS Model (No Splines)
 
 ```{r}
+#OLS model spec
 lm_spec <- 
   linear_reg() %>%
   set_engine(engine = 'lm') %>%
   set_mode('regression') 
-
+    
 #OLS recipe
 lm_rec <- recipe(Rating ~ Height + Age + Weight + Experience + Conference + hsState + `Passes Attempted` + `Games Played`, data = qb_comb) %>% 
     update_role(`Passes Attempted`, new_role = 'Info') %>%
@@ -395,11 +429,11 @@ lm_cv <- fit_resamples(lm_wf,
 
 lm_cv %>% collect_metrics()
 
-#OLS w/o splines is far worse than an OLS model incorporating natural cubic splines
+#OLS (no splines) is a far worse predictor of QB passer rating than an OLS model incorporating natural cubic splines.
 ```
 
     
-## OLS Model w/ splines  
+## OLS Model with Splines  
 
 ```{r}
 #qb_comb %>% purrr::map(~sum(is.na(.)))
