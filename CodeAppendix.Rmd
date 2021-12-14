@@ -825,16 +825,17 @@ pca_out_plot <- pca_out %>% pluck('x') %>% as.data.frame() %>% select(PC1,PC2) %
 pca_out %>% head()
 ```
 
+### Loadings
+
 ```{r}
 pca_out$rotation %>% as.data.frame() %>% select(PC1) %>%
-    #abs() %>%
     arrange(desc(abs(PC1)))
 
 pca_out$rotation %>% as.data.frame() %>% select(PC2) %>%
-    #abs() %>%
     arrange(desc(abs(PC2)))
 ```
 
+### Plots
 
 ```{r}
 pca_out %>% 
