@@ -302,7 +302,8 @@ mod1_cv %>% collect_metrics()
 # visual residuals
 mod1_output <- qb_comb %>%
     bind_cols(predict(final_fit, new_data = qb_comb)) %>%
-    mutate(resid = Rating - .pred)
+    mutate(resid = Rating - .pred) %>% 
+    filter(`Passes Attempted` >= 50, `Games Played` > 0)
 
 #Height (non-linearity)
 ggplot(mod1_output, aes(x = Height, y = resid)) +
@@ -441,8 +442,6 @@ splines_cv <- fit_resamples(splines_wf,
 
 splines_cv %>% collect_metrics()
 ```    
-
-
 
 
 
