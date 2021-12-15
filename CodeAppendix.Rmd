@@ -432,7 +432,13 @@ lm_wf <- workflow() %>%
   add_recipe(lm_rec) %>%
   add_model(lm_spec)
 
-fit(lm_wf, data = qb_comb) %>% tidy()
+#Fitting OLS model to the data
+OLS_fit <- fit(lm_wf, data = qb_comb) 
+
+#OLS model output
+output <- tidy(OLS_fit)
+
+output %>% arrange(desc(estimate)) #sort variables in the OLS model by coefficient value (a way of measuring variable importance)
 ```
 
 ### CV Metrics
@@ -452,8 +458,7 @@ lm_cv %>% collect_metrics()
 ## OLS Model w/ Splines  
 
 ```{r}
-#qb_comb %>% purrr::map(~sum(is.na(.)))
-
+#OLS model spec
 lm_spec <- 
   linear_reg() %>%
   set_engine(engine = 'lm') %>%
@@ -464,12 +469,10 @@ lm_rec <- recipe(Rating ~ Height + Age + Weight + Experience + Conference + hsSt
     update_role(`Passes Attempted`, new_role = 'Info') %>%
     update_role(`Games Played`, new_role = 'Info') %>%
     step_filter(`Passes Attempted` >= 50, `Games Played` > 0) %>% #removes potential outliers with few passes
-    #step_lincomb(all_numeric_predictors()) %>% # removes predictors that are linear combos of others
-    #step_corr(all_numeric_predictors()) %>% #removes highly correlated variables
     step_other(all_nominal_predictors(),threshold = .05)  %>%
     step_dummy(all_nominal_predictors())  # creates indicator variables for categorical variables
    
- 
+#Adding natural cubic splines to the OLS recipe 
 ns3_OLS <- lm_rec %>%
   step_ns(Weight, deg_free = 3) %>% # natural cubic splines (higher deg_free means more knots)
   step_ns(Height, deg_free = 3) %>% 
@@ -477,13 +480,18 @@ ns3_OLS <- lm_rec %>%
   step_ns(Experience, deg_free = 3) %>% 
   step_ns(`Games Played`, deg_free = 2) 
   
-
 #OLS workflow
 splines_wf <- workflow() %>%
   add_recipe(ns3_OLS) %>%
   add_model(lm_spec)
 
-fit(splines_wf, data = qb_comb) %>% tidy()
+#Fitting OLS w/ splines model to the data
+OLSsplines_fit <- fit(splines_wf, data = qb_comb) 
+
+#OLS model output
+output <- tidy(OLSsplines_fit)
+
+output %>% arrange(desc(estimate)) #sort variables in the OLS w/ splines model by coefficient value (a way of measuring variable importance)
 ```
 
 ### CV Metrics
