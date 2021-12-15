@@ -1,7 +1,7 @@
 ---
 title: "Code Appendix"
 author: "Nolan Meyer, Will Orser, Rohit Shah"
-date: "12/1/2021"
+date: "12/16/2021"
 output:
   html_document:
     toc: yes
@@ -10,7 +10,7 @@ output:
     toc: yes
 ---
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE, tidy = TRUE)
 ```
 
 
