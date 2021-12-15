@@ -503,6 +503,8 @@ splines_cv <- fit_resamples(splines_wf,
   metrics = metric_set(rmse, rsq, mae))
 
 splines_cv %>% collect_metrics()
+
+#OLS w/ Splines is a far better predictor of QB passer rating than the OLS model that does not incorporate natural cubic splines.
 ```    
 
 
