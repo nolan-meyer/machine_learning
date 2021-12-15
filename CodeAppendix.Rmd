@@ -346,56 +346,65 @@ ggplot(mod1_output, aes(x = Height, y = resid)) +
     geom_point() +
     geom_smooth() +
     geom_hline(yintercept = 0, color = "red") + 
-    theme_classic() 
+    theme_classic() +
+    labs(x = "Height (in.)", y = "Residual Value")
 
 #Age (some non-linearity)
 ggplot(mod1_output, aes(x = Age, y = resid)) +
     geom_point() +
     geom_smooth() +
     geom_hline(yintercept = 0, color = "red") + 
-    theme_classic() 
+    theme_classic() +
+    labs(y = "Residual Value")
 
 #Weight (non-linearity)
 ggplot(mod1_output, aes(x = Weight, y = resid)) +
     geom_point() +
     geom_smooth() +
     geom_hline(yintercept = 0, color = "red") + 
-    theme_classic() 
+    theme_classic() +
+    labs(x = "Weight (lbs.)", y = "Residual Value")
 
 #Experience (non-linearity)
 ggplot(mod1_output, aes(x = Experience, y = resid)) +
     geom_point() +
     geom_smooth() +
     geom_hline(yintercept = 0, color = "red") + 
-    theme_classic() 
+    theme_classic() +
+    labs(x = "Experience (Seasons)", y = "Residual Value")
 
 #College Conference
 ggplot(mod1_output, aes(x = Conference, y = resid)) +
     geom_point() +
     geom_smooth() +
     geom_hline(yintercept = 0, color = "red") + 
-    theme_classic() 
+    theme_classic() +
+    labs(x = "College Conference", y = "Residual Value") +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 #High School State
 ggplot(mod1_output, aes(x = hsState, y = resid)) +
     geom_point() +
     geom_smooth() +
     geom_hline(yintercept = 0, color = "red") + 
-    theme_classic() 
+    theme_classic() +
+    labs(x = "High School State", y = "Residual Value")
 
 #Passes Attempted (non-linearity)
 ggplot(mod1_output, aes(x = `Passes Attempted`, y = resid)) +
     geom_point() +
     geom_smooth() +
     geom_hline(yintercept = 0, color = "red") + 
-    theme_classic() 
+    theme_classic() +
+    labs(y = "Residual Value")
 
 #Games Played (non-linearity)
 ggplot(mod1_output, aes(x = `Games Played`, y = resid)) +
     geom_point() +
     geom_smooth() +
     geom_hline(yintercept = 0, color = "red") + 
-    theme_classic() 
+    theme_classic() +
+    labs(y = "Residual Value")
 ```
 
 
