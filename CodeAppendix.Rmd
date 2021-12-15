@@ -709,6 +709,9 @@ bag_metrics <- metric_set(sens, yardstick::spec, accuracy)
 
 outcome_rf_OOB_output %>% 
   bag_metrics(truth = Outcome, estimate = .pred_class)
+
+outcome_rf_OOB_output %>% 
+  conf_mat(truth = Outcome, estimate = .pred_class)
 ```
 
 
