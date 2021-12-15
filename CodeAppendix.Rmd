@@ -233,7 +233,7 @@ output <- tidy(final_fit0)
 output %>% arrange(desc(estimate)) #sort variables in the LASSO w/o splines model by coefficient value (a way of measuring variable importance)
 ```
 
-### LASO (No Splines) CV Metrics
+### CV Metrics
 
 ```{r}
 #  calculate/collect CV metrics
@@ -318,7 +318,7 @@ output %>% arrange(desc(estimate)) #sort variables in the LASSO w/ splines model
 ```
 
 
-### LASSO with Splines CV Metrics
+### CV Metrics
 
 ```{r}
 #  calculate/collect CV metrics
@@ -426,7 +426,7 @@ lm_wf <- workflow() %>%
 fit(lm_wf, data = qb_comb) %>% tidy()
 ```
 
-### OLS Model (No Splines) CV Metrics
+### CV Metrics
 
 ```{r}
 #calculate/collect CV metrics
@@ -477,7 +477,7 @@ splines_wf <- workflow() %>%
 fit(splines_wf, data = qb_comb) %>% tidy()
 ```
 
-### OLS Model w/ Splines CV Metrics
+### CV Metrics
 
 ```{r}
 #calculate/collect CV metrics
