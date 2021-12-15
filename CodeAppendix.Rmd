@@ -332,7 +332,7 @@ mod1_cv %>% collect_metrics()
 ```
 
  
-## OLS Residual Evaluation
+##Residual Evaluation (Residuals vs. Predictors)
 
 ```{r}
 # visual residuals
@@ -422,8 +422,6 @@ lm_rec <- recipe(Rating ~ Height + Age + Weight + Experience + Conference + hsSt
     update_role(`Passes Attempted`, new_role = 'Info') %>%
     update_role(`Games Played`, new_role = 'Info') %>%
     step_filter(`Passes Attempted` >= 50, `Games Played` > 0) %>% #removes potential outliers with few passes
-    #step_lincomb(all_numeric_predictors()) %>% # removes predictors that are linear combos of others
-    #step_corr(all_numeric_predictors()) %>% #removes highly correlated variables
     step_other(all_nominal_predictors(),threshold = .05)  %>%
     step_dummy(all_nominal_predictors())  # creates indicator variables for categorical variables
 
@@ -507,6 +505,23 @@ splines_cv %>% collect_metrics()
 #OLS w/ Splines is a far better predictor of QB passer rating than the OLS model that does not incorporate natural cubic splines.
 ```    
 
+##Final Model (LASSO w/ Splines) Residual Plot
+
+```{r}
+# Residual plot explorations
+mod1_output <- qb_comb %>%
+    bind_cols(predict(final_fit, new_data = qb_comb)) %>%
+    mutate(resid = Rating - .pred) %>% 
+    filter(`Passes Attempted` >= 50, `Games Played` > 0)
+
+# Residuals vs. predictions
+ggplot(mod1_output, aes(x = .pred, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") +
+    theme_classic() +
+    labs(x = "Predicted Passer Rating", y = "Residual Value (Observed PR - Predicted PR)")
+```
 
 
 # Classification
